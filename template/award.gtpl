@@ -14,6 +14,7 @@
 </head>
 <body>
     <div class='luck-back'>
+        <p id="conn_status">connecting...</p>
         <div class="luck-content ce-pack-end">
             <div id="luckuser" class="slotMachine">
                 <div class="slot">
