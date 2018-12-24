@@ -34,6 +34,8 @@ var pool WebsocketPool
 type WebsocketUtil struct {
 	connId uuid.UUID
 	conn *websocket.Conn
+	status bool
+	activeTime int64
 }
 
 type WebsocketPool struct {
@@ -44,6 +46,7 @@ type WebsocketPool struct {
 
 func (cr *WebsocketPool)GetWebsocketConn(ws *websocket.Conn) bool{
 	cr.Lock()
+	activeTime := time.Now().Unix()
 	defer cr.Unlock()
 	if len(cr.util) >= WebsocketMax{
 		fmt.Println("Reach the max and  will pop the previous conn")
@@ -52,21 +55,50 @@ func (cr *WebsocketPool)GetWebsocketConn(ws *websocket.Conn) bool{
 		if errUuid != nil{
 			panic("Generate uuid failed")
 		}
-		cr.util = append(cr.util, WebsocketUtil{IdTmp, ws})
+		cr.util = append(cr.util, WebsocketUtil{IdTmp, ws, true, activeTime})
 	}else{
 		IdTmp , errUuid := uuid.NewV4()
 		if errUuid != nil{
 			panic("Generate uuid failed")
 		}
-		cr.util = append(cr.util, WebsocketUtil{IdTmp, ws})
+		cr.util = append(cr.util, WebsocketUtil{IdTmp, ws, true, activeTime})
 	}
 	return true
+}
+
+func (cr *WebsocketPool)FindWebsocketByConn(ws *websocket.Conn) (conn *WebsocketUtil){
+	cr.Lock()
+	defer cr.Unlock()
+
+	var tmp int
+	for index, value :=range cr.util{
+		if value.conn == ws{
+			tmp = index
+		}
+	}
+	return &cr.util[tmp]
+}
+
+
+func (cr *WebsocketPool)UpdateWebsocketConnStatus(id uuid.UUID, status bool) {
+	cr.Lock()
+	defer cr.Unlock()
+	var tmp int
+	for index, value :=range cr.util{
+		if value.connId == id{
+			tmp = index
+		}
+	}
+	cr.util[tmp].status = status
 }
 
 func (cr *WebsocketPool)ReleaseWebsocketConn(id uuid.UUID){
 	//if _, isPresent := cr.util[id];isPresent{
 	//	delete(cr.util, id)
 	//}
+	cr.Lock()
+	defer cr.Unlock()
+
 	var tmp int
 	for index, value :=range cr.util{
 		if value.connId == id{
@@ -117,34 +149,33 @@ func bubbleTest(ws *websocket.Conn) {
 
 		if err = websocket.Message.Receive(ws, &reply); err != nil {
 			fmt.Println(err)
-			panic("Receive daa from web socket Error")
+			panic(err)
 		}
 
 		RedisBubbleLength, errLength := redisClient.RedisLLen("bubble")
 		if errLength != nil {
-			panic("Get data length from redis Error")
+			panic(errLength)
 		}
 		for RedisBubbleLength > MaxLengthBubble {
 			_, errGetData := redisClient.RedisLpop("bubble")
 			if errGetData != nil {
-				panic("Get bubble data length from redis Error")
+				panic(errGetData)
 			}
 			RedisBubbleLength -= 1
 
 		}
 		errPush := redisClient.RedisRpush("bubble", reply)
 		if errPush != nil {
-			panic("Push data to redis Error")
+			panic(errPush)
 		} else {
 			errStatus := redisClient.RedisSet("bubbleStatus", "true")
 			if errStatus != nil {
-				panic("Set data status to redis Error")
+				panic(errStatus)
 
 			}
 			msg := reply
 			if err = websocket.Message.Send(ws, msg); err != nil {
-				fmt.Println("Can't send")
-				break
+				panic(err)
 			}
 		}
 	}
@@ -225,10 +256,26 @@ func bubble(ws *websocket.Conn) {
 		}
 		return
 	}
-	fmt.Print(pool)
+	//for _, value := range pool.util{
+	//	fmt.Println("---------")
+	//	fmt.Println(value.connId)
+	//	fmt.Println(value.conn)
+	//	fmt.Println("---------")
+	//}
+
 
 	for {
 		START:
+		var reply string
+
+		if errRecv := websocket.Message.Receive(ws, &reply); errRecv != nil {
+			fmt.Println(errRecv)
+			panic(errRecv)
+		}
+		wsRecv :=pool.FindWebsocketByConn(ws)
+		wsRecv.activeTime = time.Now().Unix()
+
+
 		time.Sleep(1*time.Second)
 		bubbleLength, errLength := redisClient.RedisLLen("bubble")
 		if errLength != nil{
@@ -248,15 +295,26 @@ func bubble(ws *websocket.Conn) {
 		}
 
 		for _, _ws := range pool.util {
-			if err := websocket.Message.Send(_ws.conn, string(data)); err != nil {
-				fmt.Println(err)
-				panic("Send msg to web socket Error, Send data Phase")
+			if time.Now().Unix() - _ws.activeTime < 10{
+				fmt.Println(pool.util)
+				if err := websocket.Message.Send(_ws.conn, string(data)); err != nil {
+					fmt.Println(err)
+					fmt.Println(_ws.connId)
+					pool.ReleaseWebsocketConn(_ws.connId)
+				}
+				//_ws.status = false
+				//pool.UpdateWebsocketConnStatus(_ws.connId, false)
+			}else{
+				pool.ReleaseWebsocketConn(_ws.connId)
 			}
 		}
 	}
 }
 
 
+func SetTimer(){
+	time.Sleep(3* time.Second)
+}
 
 
 func main() {
