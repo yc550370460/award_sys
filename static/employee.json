@@ -1,14 +1,50 @@
 [
   {
     "name": "duke",
-    "icon": "/img/icon/1.ico"
+    "icon": "/static/img/employee_ico/1.jpg"
   },
   {
   "name": "lilei",
-  "icon": "/img/icon/2.ico"
+  "icon": "/static/img/employee_ico/2.jpg"
   },
   {
   "name": "hanmm",
-  "icon": "/img/icon/3.ico"
+  "icon": "/static/img/employee_ico/3.jpg"
+  },
+  {
+    "name": "duke1",
+    "icon": "/static/img/employee_ico/4.jpg"
+  },
+  {
+    "name": "lilei1",
+    "icon": "/static/img/employee_ico/5.jpg"
+  },
+  {
+    "name": "hanmm1",
+    "icon": "/static/img/employee_ico/6.jpg"
+  },
+  {
+    "name": "duke2",
+    "icon": "/static/img/employee_ico/1.jpg"
+  },
+  {
+    "name": "lilei2",
+    "icon": "/static/img/employee_ico/2.jpg"
+  },
+  {
+    "name": "hanmm2",
+    "icon": "/static/img/employee_ico/3.jpg"
+  },
+  {
+    "name": "duke3",
+    "icon": "/static/img/employee_ico/4.jpg"
+  },
+  {
+    "name": "lilei3",
+    "icon": "/static/img/employee_ico/5.jpg"
+  },
+  {
+    "name": "hanmm3",
+    "icon": "/static/img/employee_ico/6.jpg"
   }
 ]

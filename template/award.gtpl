@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>抽奖</title>
+    <title>Lottery</title>
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
@@ -22,7 +22,8 @@
                 </div>
             </div>
             <div class="luck-content-btn">
-                <a id="start" class="start" onclick="start()">开始</a>
+                <a id="start" class="start" onclick='start($("#count_set").val())'>开始</a>
+                <span><input id="count_set"></span>
             </div>
             <div class="luck-user">
                 <div class="luck-user-title">
@@ -38,34 +39,15 @@
 
 
     <script>
+        var all_employee = new Array();
         var xinm = new Array();
-        xinm[0] = "/static/img/employee_ico/1.jpg"
-        xinm[1] = "/static/img/employee_ico/2.jpg"
-        xinm[2] = "/static/img/employee_ico/3.jpg"
-        xinm[3] = "/static/img/employee_ico/4.jpg"
-        xinm[4] = "/static/img/employee_ico/5.jpg"
-        xinm[5] = "/static/img/employee_ico/6.jpg"
-        xinm[6] = "/static/img/employee_ico/1.jpg"
-        xinm[7] = "/static/img/employee_ico/2.jpg"
-        xinm[8] = "/static/img/employee_ico/3.jpg"
-        xinm[9] = "/static/img/employee_ico/4.jpg"
-        xinm[10] = "/static/img/employee_ico/5.jpg"
-        xinm[11] = "/static/img/employee_ico/6.jpg"
-
         var phone = new Array();
-        phone[0] = "王尼玛"
-        phone[1] = "张全蛋"
-        phone[2] = "纸巾老撕"
-        phone[3] = "王铁柱"
-        phone[4] = "田二妞"
-        phone[5] = "唐马儒"
-        phone[6] = "张三"
-        phone[7] = "李四"
-        phone[8] = "王二麻子"
-        phone[9] = "咯咯咯"
-        phone[10] = "一二三"
-        phone[11] = "四五六"
-
+        all_employee = {{.}}
+        for (i=0;i<all_employee.length;i++)
+        {
+            xinm[i] = all_employee[i].Icon
+            phone[i] = all_employee[i].Name
+        }
         let sock = null;
         const wsuri = "ws://127.0.0.1:1234/bubble";
         var heart_beat = 0;
@@ -159,7 +141,7 @@
                     }
                 }
                 else{
-                    sock.send("Heartbeat");
+                    sock.send("2018");
                 }
             }
         }

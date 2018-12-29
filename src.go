@@ -149,7 +149,8 @@ func bubbleTest(ws *websocket.Conn) {
 
 		if err = websocket.Message.Receive(ws, &reply); err != nil {
 			fmt.Println(err)
-			panic(err)
+			fmt.Println("Client lost")
+			return
 		}
 
 		RedisBubbleLength, errLength := redisClient.RedisLLen("bubble")
@@ -198,7 +199,7 @@ func route(w http.ResponseWriter, r *http.Request) {
 func award(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		t, _ := template.ParseFiles(templatePath + "/award.gtpl")
-		log.Println(t.Execute(w, nil))
+		t.Execute(w, Employees)
 	}
 }
 
@@ -256,22 +257,15 @@ func bubble(ws *websocket.Conn) {
 		}
 		return
 	}
-	//for _, value := range pool.util{
-	//	fmt.Println("---------")
-	//	fmt.Println(value.connId)
-	//	fmt.Println(value.conn)
-	//	fmt.Println("---------")
-	//}
-
 
 	for {
 		START:
-		var reply string
+		//var reply string
 
-		if errRecv := websocket.Message.Receive(ws, &reply); errRecv != nil {
-			fmt.Println(errRecv)
-			panic(errRecv)
-		}
+		//if errRecv := websocket.Message.Receive(ws, &reply); errRecv != nil {
+		//	fmt.Println(errRecv)
+		//	panic(errRecv)
+		//}
 		wsRecv :=pool.FindWebsocketByConn(ws)
 		wsRecv.activeTime = time.Now().Unix()
 
@@ -288,7 +282,6 @@ func bubble(ws *websocket.Conn) {
 		}
 
 		data, errGetData := redisClient.RedisRpop("bubble")
-		fmt.Println(string(data))
 		if errGetData != nil{
 			fmt.Println(errGetData)
 			panic("Get bubble data from redis Error")
@@ -328,7 +321,7 @@ func main() {
 	// static files url
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticPath))))
 	// award page, just show the page
-	http.HandleFunc("/award/", award)
+	http.HandleFunc("/lottery/", award)
 	// login page
 	http.HandleFunc("/login/", login)
 	// Get the bubble text from user and store in redis
